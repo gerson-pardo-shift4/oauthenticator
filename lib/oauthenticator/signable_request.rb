@@ -6,7 +6,7 @@ require 'strscan'
 require 'oauthenticator/parse_authorization'
 
 module OAuthenticator
-  # a request which may be signed with OAuth, generally in order to apply the signature to an outgoing request 
+  # a request which may be signed with OAuth, generally in order to apply the signature to an outgoing request
   # in the Authorization header.
   #
   # primarily this is to be used like:
@@ -25,7 +25,7 @@ module OAuthenticator
   #     )
   #     my_http_request.headers['Authorization'] = oauthenticator_signable_request.authorization
   class SignableRequest
-    # keys of OAuth protocol parameters which form the Authorization header (with an oauth_ prefix). 
+    # keys of OAuth protocol parameters which form the Authorization header (with an oauth_ prefix).
     # signature is considered separately.
     PROTOCOL_PARAM_KEYS = %w(consumer_key token signature_method timestamp nonce version).map(&:freeze).freeze
 
@@ -33,32 +33,32 @@ module OAuthenticator
     #
     # - request_method (required) - get, post, etc. may be string or symbol.
     # - uri (required) - request URI. to_s is called so URI or Addressable::URI or whatever may be passed.
-    # - media_type (required) - the request media type (may be nil if there is no body). note that this may be 
+    # - media_type (required) - the request media type (may be nil if there is no body). note that this may be
     #   different than the Content-Type header; other components of that such as encoding must not be included.
     # - body (required) - the request body. may be a String or an IO, or nil if no body is present.
-    # - hash_body? - whether to add the oauth_body_hash parameter, per the OAuth Request Body Hash 
+    # - hash_body? - whether to add the oauth_body_hash parameter, per the OAuth Request Body Hash
     #   specification. defaults to true. not used if the 'authorization' parameter is used.
     # - signature_method (required*) - oauth signature method (String)
     # - consumer_key (required*) - oauth consumer key (String)
     # - consumer_secret (required*) - oauth consumer secret (String)
     # - token (optional*) - oauth token; may be omitted if only using a consumer key (two-legged)
     # - token_secret (optional) - must be present if token is present. must be omitted if token is omitted.
-    # - timestamp (optional*) - if omitted, defaults to the current time. 
+    # - timestamp (optional*) - if omitted, defaults to the current time.
     #   if nil is passed, no oauth_timestamp will be present in the generated authorization.
-    # - nonce (optional*) - if omitted, defaults to a random string. 
+    # - nonce (optional*) - if omitted, defaults to a random string.
     #   if nil is passed, no oauth_nonce will be present in the generated authorization.
-    # - version (optional*) - must be nil or '1.0'. defaults to '1.0' if omitted. 
+    # - version (optional*) - must be nil or '1.0'. defaults to '1.0' if omitted.
     #   if nil is passed, no oauth_version will be present in the generated authorization.
-    # - realm (optional) - authorization realm. 
+    # - realm (optional) - authorization realm.
     #   if nil is passed, no realm will be present in the generated authorization.
-    # - authorization - a hash of a received Authorization header, the result of a call to 
-    #   OAuthenticator.parse_authorization. it is useful for calculating the signature of a received request, 
-    #   but for fully authenticating a received request it is generally preferable to use 
-    #   OAuthenticator::SignedRequest. specifying this precludes the requirement to specify any of 
+    # - authorization - a hash of a received Authorization header, the result of a call to
+    #   OAuthenticator.parse_authorization. it is useful for calculating the signature of a received request,
+    #   but for fully authenticating a received request it is generally preferable to use
+    #   OAuthenticator::SignedRequest. specifying this precludes the requirement to specify any of
     #   PROTOCOL_PARAM_KEYS.
     #
-    # (*) attributes which are in PROTOCOL_PARAM_KEYS are unused (and not required) when the 
-    # 'authorization' attribute is given for signature verification. normally, though, they are used and 
+    # (*) attributes which are in PROTOCOL_PARAM_KEYS are unused (and not required) when the
+    # 'authorization' attribute is given for signature verification. normally, though, they are used and
     # are required or optional as noted.
     def initialize(attributes)
       raise TypeError, "attributes must be a hash" unless attributes.is_a?(Hash)
@@ -80,7 +80,7 @@ module OAuthenticator
           raise TypeError, "authorization must be a Hash"
         end
 
-        # if authorization is specified, protocol params should not be specified in the regular attributes 
+        # if authorization is specified, protocol params should not be specified in the regular attributes
         given_protocol_params = @attributes.reject { |k,v| !(PROTOCOL_PARAM_KEYS.include?(k) && v) }
         if given_protocol_params.any?
           raise ArgumentError, "an existing authorization was given, but protocol parameters were also " +
@@ -123,7 +123,7 @@ module OAuthenticator
       rbmethod.bind(self).call
     end
 
-    # the oauth_body_hash calculated for this request, if applicable, per the OAuth Request Body Hash 
+    # the oauth_body_hash calculated for this request, if applicable, per the OAuth Request Body Hash
     # specification.
     #
     # @return [String, nil] oauth body hash
@@ -131,12 +131,12 @@ module OAuthenticator
       BODY_HASH_METHODS[signature_method] ? BODY_HASH_METHODS[signature_method].bind(self).call : nil
     end
 
-    # protocol params for this request as described in section 3.4.1.3 
+    # protocol params for this request as described in section 3.4.1.3
     #
-    # signature is not calculated for this - use #signed_protocol_params to get protocol params including a 
-    # signature. 
+    # signature is not calculated for this - use #signed_protocol_params to get protocol params including a
+    # signature.
     #
-    # note that if this is a previously-signed request, the oauth_signature attribute returned is the 
+    # note that if this is a previously-signed request, the oauth_signature attribute returned is the
     # received value, NOT the value calculated by us.
     #
     # @return [Hash<String, String>] protocol params
@@ -144,7 +144,7 @@ module OAuthenticator
       @attributes['authorization'].dup
     end
 
-    # protocol params for this request as described in section 3.4.1.3, including our calculated 
+    # protocol params for this request as described in section 3.4.1.3, including our calculated
     # oauth_signature.
     #
     # @return [Hash<String, String>] signed protocol params
@@ -208,17 +208,19 @@ module OAuthenticator
 
     # section 3.4.1.3.1
     #
-    # parsed query params, extracted from the request URI. since keys may appear multiple times, represented 
+    # parsed query params, extracted from the request URI. since keys may appear multiple times, represented
     # as an array of two-element arrays and not a hash
     #
     # @return [Array<Array<String, nil> (size 2)>]
     def query_params
-      parse_form_encoded(URI.parse(@attributes['uri'].to_s).query || '')
+      output = parse_form_encoded(URI.parse(@attributes['uri'].to_s).query || '')
+      puts "OAuthenticator query_params - query #{URI.parse(@attributes['uri'].to_s).query} - output: #{output}" if @attributes['uri'].to_s.include?('/stand')
+      output
     end
 
     # section 3.4.1.3.1
     #
-    # parsed entity params from the body, when the request is form encoded. since keys may appear multiple 
+    # parsed entity params from the body, when the request is form encoded. since keys may appear multiple
     # times, represented as an array of two-element arrays and not a hash
     #
     # @return [Array<Array<String, nil> (size 2)>]
@@ -234,20 +236,24 @@ module OAuthenticator
     #
     # @return [Array<Array<String, nil> (size 2)>]
     def parse_form_encoded(data)
+      #data.split('&').map do |pair|
+      #  key, value = pair.split('=', 2).map { |v| CGI::unescape(v) }
+      #  [key, value] unless [nil, ''].include?(key)
+      #end.compact
       data.split(/[&;]/).map do |pair|
         key, value = pair.split('=', 2).map { |v| CGI::unescape(v) }
         [key, value] unless [nil, ''].include?(key)
       end.compact
     end
 
-    # string of protocol params including signature, sorted 
+    # string of protocol params including signature, sorted
     #
     # @return [String]
     def normalized_protocol_params_string
       signed_protocol_params.sort.map { |(k,v)| %Q(#{OAuthenticator.escape(k)}="#{OAuthenticator.escape(v)}") }.join(', ')
     end
 
-    # reads the request body, be it String or IO 
+    # reads the request body, be it String or IO
     #
     # @return [String] request body
     def read_body
@@ -267,7 +273,7 @@ module OAuthenticator
       end
     end
 
-    # set the oauth_body_hash to the hash of the request body 
+    # set the oauth_body_hash to the hash of the request body
     #
     # @return [Void]
     def hash_body
@@ -276,8 +282,8 @@ module OAuthenticator
       end
     end
 
-    # whether we will hash the body, per oauth request body hash section 4.1, as well as whether the caller 
-    # said to 
+    # whether we will hash the body, per oauth request body hash section 4.1, as well as whether the caller
+    # said to
     #
     # @return [Boolean]
     def hash_body?
@@ -285,14 +291,14 @@ module OAuthenticator
         (@attributes.key?('hash_body?') ? @attributes['hash_body?'] : true)
     end
 
-    # signature method 
+    # signature method
     #
     # @return [String]
     def signature_method
       @attributes['authorization']['oauth_signature_method']
     end
 
-    # signature, with method RSA-SHA1. section 3.4.3 
+    # signature, with method RSA-SHA1. section 3.4.3
     #
     # @return [String]
     def rsa_sha1_signature
@@ -304,8 +310,9 @@ module OAuthenticator
     #
     # @return [String]
     def hmac_sha1_signature
-      # hmac secret is same as plaintext signature 
+      # hmac secret is same as plaintext signature
       secret = plaintext_signature
+      puts "OAuthenticator hmac_sha1_signature - signature_base: #{signature_base}" if @attributes['uri'].to_s.include?('/stand')
       Base64.encode64(OpenSSL::HMAC.digest(OpenSSL::Digest::SHA1.new, secret, signature_base)).gsub(/\n/, '')
     end
 
@@ -313,6 +320,7 @@ module OAuthenticator
     #
     # @return [String]
     def plaintext_signature
+      puts "OAuthenticator plaintext_signature - attributes: #{@attributes.inspect}" if @attributes['uri'].to_s.include?('/stand')
       @attributes.values_at('consumer_secret', 'token_secret').map { |v| OAuthenticator.escape(v) }.join('&')
     end
 
@@ -323,18 +331,23 @@ module OAuthenticator
       Base64.encode64(OpenSSL::Digest::SHA1.digest(read_body)).gsub(/\n/, '')
     end
 
-    # map of oauth signature methods to their signature instance methods on this class 
+    # map of oauth signature methods to their signature instance methods on this class
     SIGNATURE_METHODS = {
       'RSA-SHA1'.freeze => instance_method(:rsa_sha1_signature),
       'HMAC-SHA1'.freeze => instance_method(:hmac_sha1_signature),
       'PLAINTEXT'.freeze => instance_method(:plaintext_signature),
     }.freeze
 
-    # map of oauth signature methods to their body hash instance methods on this class. oauth request body 
+    # map of oauth signature methods to their body hash instance methods on this class. oauth request body
     # hash section 3.1
     BODY_HASH_METHODS = {
       'RSA-SHA1'.freeze => instance_method(:sha1_body_hash),
       'HMAC-SHA1'.freeze => instance_method(:sha1_body_hash),
     }.freeze
   end
+
+  def log(level, message)
+    Rails.logger.send(level, message)
+  end
+
 end
